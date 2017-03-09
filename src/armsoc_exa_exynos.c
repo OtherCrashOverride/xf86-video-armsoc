@@ -143,17 +143,17 @@ Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 			x1, y1, x2, y2, ret);
 	}
 
-	//g2d_exec(nullExaRec->ctx);
+	g2d_exec(nullExaRec->ctx);
 }
 
 static void
 DoneSolid(PixmapPtr pPixmap)
 {
-	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
-	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
-	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
+	//ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+	//struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
+	//struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
 
-	g2d_exec(nullExaRec->ctx);
+	//g2d_exec(nullExaRec->ctx);
 }
 
 
