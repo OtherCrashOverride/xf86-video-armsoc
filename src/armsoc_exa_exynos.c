@@ -235,6 +235,9 @@ CloseScreen(CLOSE_SCREEN_ARGS_DECL)
 {
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	struct ARMSOCRec *pARMSOC = ARMSOCPTR(pScrn);
+	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
+
+	g2d_fini(nullExaRec->ctx);
 
 	exaDriverFini(pScreen);
 	free(((struct ARMSOCNullEXARec *)pARMSOC->pARMSOCEXA)->exa);
