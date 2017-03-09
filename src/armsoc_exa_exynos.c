@@ -107,10 +107,14 @@ Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 
 
 	// Source
-	switch (armsoc_bo_bpp(dstPriv->bo))
+	switch (armsoc_bo_depth(dstPriv->bo))
 	{
 	case 32:
 		dstImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+		break;
+
+	case 24:
+		dstImage.color_mode = G2D_COLOR_FMT_XRGB8888 | G2D_ORDER_AXRGB;
 		break;
 
 	case 16:
@@ -133,27 +137,42 @@ Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 	dstImage.bo[0] = armsoc_bo_handle(dstPriv->bo);
 
 
-	ret = g2d_solid_fill(nullExaRec->ctx,
-						 &dstImage,
-					     x1, y1,
-						 x2 - x1, y2 - y1);
-	if (ret < 0)
+	while (1)
 	{
-		xf86DrvMsg(-1, X_ERROR, "g2d_solid_fill: x1=%d, y1=%d, x2=%d, y2=%d | (ret=%d)\n",
-			x1, y1, x2, y2, ret);
+		ret = g2d_solid_fill(nullExaRec->ctx,
+			&dstImage,
+			x1, y1,
+			x2 - x1, y2 - y1);
+		
+		if (ret == -ENOSPC ||
+			ret == -EINVAL)
+		{
+			// The command queue is full, execute it to free space
+			g2d_exec(nullExaRec->ctx);
+		}
+		else if (ret < 0)
+		{
+			// An error occured
+			xf86DrvMsg(-1, X_ERROR, "g2d_solid_fill: x1=%d, y1=%d, x2=%d, y2=%d | (ret=%d)\n",
+				x1, y1, x2, y2, ret);
+			break;
+		}
+		else
+		{
+			// Success
+			break;
+		}		
 	}
-
-	g2d_exec(nullExaRec->ctx);
 }
 
 static void
 DoneSolid(PixmapPtr pPixmap)
 {
-	//ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
-	//struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
-	//struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
+	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
 
-	//g2d_exec(nullExaRec->ctx);
+	g2d_exec(nullExaRec->ctx);
 }
 
 
@@ -218,10 +237,14 @@ static void Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
 
 	// Source
-	switch (armsoc_bo_bpp(srcPriv->bo))
+	switch (armsoc_bo_depth(srcPriv->bo))
 	{
 	case 32:
 		srcImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+		break;
+
+	case 24:
+		srcImage.color_mode = G2D_COLOR_FMT_XRGB8888 | G2D_ORDER_AXRGB;
 		break;
 
 	case 16:
@@ -246,10 +269,14 @@ static void Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
 
 	// Destination
-	switch (armsoc_bo_bpp(dstPriv->bo))
+	switch (armsoc_bo_depth(dstPriv->bo))
 	{
 	case 32:
 		dstImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+		break;
+
+	case 24:
+		dstImage.color_mode = G2D_COLOR_FMT_XRGB8888 | G2D_ORDER_AXRGB;
 		break;
 
 	case 16:
