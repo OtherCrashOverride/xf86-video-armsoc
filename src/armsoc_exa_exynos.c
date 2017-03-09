@@ -58,13 +58,104 @@ struct ARMSOCNullEXARec {
 	PixmapPtr pSource;
 	int xdir;
 	int ydir;
+	uint32_t fillColor;
 };
 
 static Bool
-PrepareSolidFail(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_colour)
+PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_color)
 {
-	return FALSE;
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
+	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
+	struct ARMSOCPixmapPrivRec* dstPriv = exaGetPixmapDriverPrivate(pPixmap);
+	uint32_t dstBpp;
+
+
+	// If there are no buffer objects, fallback
+	if (!dstPriv->bo)
+	{
+		return FALSE;
+	}
+
+	// If bpp is not 32 or 16, fallback
+	dstBpp = armsoc_bo_bpp(dstPriv->bo);
+
+	if (((dstBpp != 32) && (dstBpp != 16)))
+	{
+		return FALSE;
+	}
+
+	// Save required information for later
+	nullExaRec->fillColor = (uint32_t)fill_color;
+
+	return TRUE;
 }
+
+static void
+Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
+	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
+	struct ARMSOCPixmapPrivRec* dstPriv = exaGetPixmapDriverPrivate(pPixmap);
+
+	struct g2d_image dstImage;
+	int ret;
+
+
+	memset(&dstImage, 0, sizeof(dstImage));
+
+
+	// Source
+	switch (armsoc_bo_bpp(dstPriv->bo))
+	{
+	case 32:
+		dstImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+		break;
+
+	case 16:
+		dstImage.color_mode = G2D_COLOR_FMT_RGB565;
+		break;
+
+	default:
+		// Not supported
+		ERROR_MSG("EXA Solid: dstImage bpp not supported. (%d)", armsoc_bo_bpp(dstPriv->bo));
+		break;
+	}
+
+	//srcImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+	dstImage.width = armsoc_bo_width(dstPriv->bo);
+	dstImage.height = armsoc_bo_height(dstPriv->bo);
+	dstImage.stride = armsoc_bo_pitch(dstPriv->bo);
+	dstImage.color = nullExaRec->fillColor;
+	
+	dstImage.buf_type = G2D_IMGBUF_GEM;
+	dstImage.bo[0] = armsoc_bo_handle(dstPriv->bo);
+
+
+	ret = g2d_solid_fill(nullExaRec->ctx,
+						 &dstImage,
+					     x1, y1,
+						 x2 - x1, y2 - y1);
+	if (ret < 0)
+	{
+		xf86DrvMsg(-1, X_ERROR, "g2d_solid_fill: x1=%d, y1=%d, x2=%d, y2=%d | (ret=%d)\n",
+			x1, y1, x2, y2, ret);
+	}
+
+	//g2d_exec(nullExaRec->ctx);
+}
+
+static void
+DoneSolid(PixmapPtr pPixmap)
+{
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
+	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
+
+	g2d_exec(nullExaRec->ctx);
+}
+
 
 static Bool
 PrepareCopy(PixmapPtr pSrc, PixmapPtr pDst, int xdir, int ydir,
@@ -300,13 +391,17 @@ InitNullEXA(ScreenPtr pScreen, ScrnInfoPtr pScrn, int fd)
 
 	/* Always fallback for software operations */
 	//exa->PrepareCopy = PrepareCopyFail;
-	exa->PrepareSolid = PrepareSolidFail;
+	//exa->PrepareSolid = PrepareSolidFail;
 	exa->CheckComposite = CheckCompositeFail;
 	exa->PrepareComposite = PrepareCompositeFail;
 
 	exa->PrepareCopy = PrepareCopy;
 	exa->Copy = Copy;
 	exa->DoneCopy = DoneCopy;
+
+	exa->PrepareSolid = PrepareSolid;
+	exa->Solid = Solid;
+	exa->DoneSolid = DoneSolid;
 
 	if (!exaDriverInit(pScreen, exa)) {
 		ERROR_MSG("exaDriverInit failed");

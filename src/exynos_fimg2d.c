@@ -480,10 +480,10 @@ g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
 	g2d_add_base_addr(ctx, img, g2d_dst);
 	g2d_add_cmd(ctx, DST_STRIDE_REG, img->stride);
 
-	if (x + w > img->width)
-		w = img->width - x;
-	if (y + h > img->height)
-		h = img->height - y;
+	//if (x + w > img->width)
+	//	w = img->width - x;
+	//if (y + h > img->height)
+	//	h = img->height - y;
 
 	pt.data.x = x;
 	pt.data.y = y;
@@ -493,7 +493,8 @@ g2d_solid_fill(struct g2d_context *ctx, struct g2d_image *img,
 	pt.data.y = y + h;
 	g2d_add_cmd(ctx, DST_RIGHT_BOTTOM_REG, pt.val);
 
-	g2d_add_cmd(ctx, SF_COLOR_REG, img->color);
+	//g2d_add_cmd(ctx, SF_COLOR_REG, img->color);
+	g2d_add_cmd(ctx, FG_COLOR_REG, img->color);
 
 	bitblt.val = 0;
 	bitblt.data.fast_solid_color_fill_en = 1;
