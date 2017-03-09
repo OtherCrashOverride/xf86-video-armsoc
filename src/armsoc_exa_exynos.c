@@ -176,12 +176,16 @@ static void Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 			ret);
 	}
 
-	ret = g2d_exec(nullExaRec->ctx);
+	//ret = g2d_exec(nullExaRec->ctx);
 }
 
 static void DoneCopy(PixmapPtr pDstPixmap)
 {
+	ScrnInfoPtr pScrn = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
+	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
+	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
 
+	g2d_exec(nullExaRec->ctx);
 }
 
 static Bool
