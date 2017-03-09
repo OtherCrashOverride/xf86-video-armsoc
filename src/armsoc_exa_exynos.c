@@ -77,42 +77,33 @@ PrepareCopy(PixmapPtr pSrc, PixmapPtr pDst, int xdir, int ydir,
 	struct ARMSOCPixmapPrivRec* srcPriv = exaGetPixmapDriverPrivate(pSrc);
 	struct ARMSOCPixmapPrivRec* dstPriv = exaGetPixmapDriverPrivate(pDst);
 
+	uint32_t srcBpp;
+	uint32_t dstBpp;
+
+
 	// If there are no buffer objects, fallback
 	if (!srcPriv->bo || !dstPriv->bo)
 	{
 		return FALSE;
 	}
 
-	// If bo is not 32bit, fallback
-	if ((armsoc_bo_bpp(srcPriv->bo) != 32) ||
-		(armsoc_bo_bpp(dstPriv->bo) != 32))
+	// If bpp is not 32 or 16, fallback
+	srcBpp = armsoc_bo_bpp(srcPriv->bo);
+	dstBpp = armsoc_bo_bpp(dstPriv->bo);
+
+	if (((srcBpp != 32) && (srcBpp != 16)) ||
+		((dstBpp != 32) && (dstBpp != 16)))
 	{
 		return FALSE;
 	}
 
-#if 0
-	if (ARMSOCPrepareAccess(pSrc, EXA_PREPARE_SRC) == FALSE)
-	{
-		return FALSE;
-	}
 
-	if (ARMSOCPrepareAccess(pDst, EXA_PREPARE_DEST) == FALSE)
-	{
-		ARMSOCFinishAccess(pSrc, EXA_PREPARE_SRC);
-		return FALSE;
-	}
-
-	ARMSOCRegisterExternalAccess(pSrc);
-	ARMSOCRegisterExternalAccess(pDst);
-#endif
-
-	// Save for later
+	// Save required information for later
 	nullExaRec->pSource = pSrc;
 	nullExaRec->xdir = xdir;
 	nullExaRec->ydir = ydir;
 
 
-	//return FALSE;
 	return TRUE;
 }
 
@@ -136,7 +127,23 @@ static void Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
 
 	// Source
-	srcImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+	switch (armsoc_bo_bpp(srcPriv->bo))
+	{
+	case 32:
+		srcImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+		break;
+
+	case 16:
+		srcImage.color_mode = G2D_COLOR_FMT_RGB565;
+		break;
+
+	default:
+		// Not supported
+		ERROR_MSG("EXA Copy: srcImage bpp not supported. (%d)", armsoc_bo_bpp(srcPriv->bo));
+		break;
+	}
+
+	//srcImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
 	srcImage.width = armsoc_bo_width(srcPriv->bo);
 	srcImage.height = armsoc_bo_height(srcPriv->bo);
 	srcImage.stride = armsoc_bo_pitch(srcPriv->bo);
@@ -148,7 +155,23 @@ static void Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 
 
 	// Destination
-	dstImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+	switch (armsoc_bo_bpp(dstPriv->bo))
+	{
+	case 32:
+		dstImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
+		break;
+
+	case 16:
+		dstImage.color_mode = G2D_COLOR_FMT_RGB565;
+		break;
+
+	default:
+		// Not supported
+		ERROR_MSG("EXA Copy: dstImage bpp not supported. (%d)", armsoc_bo_bpp(dstPriv->bo));
+		break;
+	}
+
+	//dstImage.color_mode = G2D_COLOR_FMT_ARGB8888 | G2D_ORDER_AXRGB;
 	dstImage.width = armsoc_bo_width(dstPriv->bo);
 	dstImage.height = armsoc_bo_height(dstPriv->bo);
 	dstImage.stride = armsoc_bo_pitch(dstPriv->bo);
