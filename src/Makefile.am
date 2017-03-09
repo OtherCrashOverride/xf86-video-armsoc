@@ -49,7 +49,8 @@ DRMMODE_SRCS = drmmode_exynos/drmmode_exynos.c \
 armsoc_drv_la_SOURCES = \
          drmmode_display.c \
          armsoc_exa.c \
-         armsoc_exa_null.c \
+         armsoc_exa_exynos.c \
+	 exynos_fimg2d.c \
          armsoc_dri2.c \
          armsoc_driver.c \
          armsoc_dumb.c \
