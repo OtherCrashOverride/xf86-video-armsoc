@@ -637,6 +637,8 @@ drmmode_cursor_init_plane(ScreenPtr pScreen)
 	drmModePlane *ovr;
 	int w, h, pad;
 	uint32_t handles[4], pitches[4], offsets[4]; /* we only use [0] */
+	struct drm_set_client_cap cap;
+	int io;
 
 	if (drmmode->cursor) {
 		INFO_MSG("cursor already initialized");
@@ -646,6 +648,17 @@ drmmode_cursor_init_plane(ScreenPtr pScreen)
 	if (!xf86LoaderCheckSymbol("drmModeGetPlaneResources")) {
 		ERROR_MSG(
 				"HW cursor not supported (needs libdrm 2.4.30 or higher)");
+		return FALSE;
+	}
+
+	/* Enable universal planes capability */
+	cap.capability = DRM_CLIENT_CAP_UNIVERSAL_PLANES;
+	cap.value = 1;
+
+	io = drmIoctl(drmmode->fd, DRM_IOCTL_SET_CLIENT_CAP, &cap);
+	if (io < 0)
+	{
+		ERROR_MSG("DRM_IOCTL_SET_CLIENT_CAP failed.");
 		return FALSE;
 	}
 
@@ -666,7 +679,8 @@ drmmode_cursor_init_plane(ScreenPtr pScreen)
 		return FALSE;
 	}
 
-	ovr = drmModeGetPlane(drmmode->fd, plane_resources->planes[0]);
+	/* TODO: loop through planes and find the cursor plane */
+	ovr = drmModeGetPlane(drmmode->fd, plane_resources->planes[1]);
 	if (!ovr) {
 		ERROR_MSG("HW cursor: drmModeGetPlane failed: %s",
 					strerror(errno));
