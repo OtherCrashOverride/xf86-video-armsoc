@@ -885,8 +885,9 @@ ARMSOCPreInit(ScrnInfoPtr pScrn, int flags)
 	}
 	pARMSOC->driNumBufs = driNumBufs;
 	/* Determine if user wants to disable buffer flipping: */
-	pARMSOC->NoFlip = xf86ReturnOptValBool(pARMSOC->pOptionInfo,
-			OPTION_NO_FLIP, FALSE);
+	//pARMSOC->NoFlip = xf86ReturnOptValBool(pARMSOC->pOptionInfo,
+	//		OPTION_NO_FLIP, FALSE);
+	pARMSOC->NoFlip = 1;
 	INFO_MSG("Buffer Flipping is %s",
 				pARMSOC->NoFlip ? "Disabled" : "Enabled");
 	pARMSOC->useUmplock = xf86ReturnOptValBool(pARMSOC->pOptionInfo,
