@@ -64,6 +64,12 @@ struct ARMSOCNullEXARec {
 static Bool
 PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_color)
 {
+#if 1
+
+	return FALSE;
+
+#else
+
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
 	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
 	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
@@ -89,6 +95,8 @@ PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_color)
 	nullExaRec->fillColor = (uint32_t)fill_color;
 
 	return TRUE;
+
+#endif
 }
 
 static void
