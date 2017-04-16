@@ -61,10 +61,36 @@ struct ARMSOCNullEXARec {
 	uint32_t fillColor;
 };
 
+
+#if 0
+/* graphics functions, as in GC.alu */
+
+#define GXclear                 0x0             /* 0 */
+#define GXand                   0x1             /* src AND dst */
+#define GXandReverse            0x2             /* src AND NOT dst */
+#define GXcopy                  0x3             /* src */
+#define GXandInverted           0x4             /* NOT src AND dst */
+#define GXnoop                  0x5             /* dst */
+#define GXxor                   0x6             /* src XOR dst */
+#define GXor                    0x7             /* src OR dst */
+#define GXnor                   0x8             /* NOT src AND NOT dst */
+#define GXequiv                 0x9             /* NOT src XOR dst */
+#define GXinvert                0xa             /* NOT dst */
+#define GXorReverse             0xb             /* src OR NOT dst */
+#define GXcopyInverted          0xc             /* NOT src */
+#define GXorInverted            0xd             /* NOT src OR dst */
+#define GXnand                  0xe             /* NOT src OR NOT dst */
+#define GXset                   0xf             /* 1 */
+#endif
+
+/*
+* The alu raster op is one of the GX*
+* graphics functions listed in X.h
+*/
 static Bool
 PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_color)
 {
-#if 1
+#if 0
 
 	return FALSE;
 
@@ -76,6 +102,12 @@ PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_color)
 	struct ARMSOCPixmapPrivRec* dstPriv = exaGetPixmapDriverPrivate(pPixmap);
 	uint32_t dstBpp;
 
+
+	// Only GXset operation is supported
+	if (alu != GXset)
+	{
+		return FALSE;
+	}
 
 	// If there are no buffer objects, fallback
 	if (!dstPriv->bo)
@@ -145,42 +177,31 @@ Solid(PixmapPtr pPixmap, int x1, int y1, int x2, int y2)
 	dstImage.bo[0] = armsoc_bo_handle(dstPriv->bo);
 
 
-	while (1)
+	ret = g2d_solid_fill(nullExaRec->ctx,
+		&dstImage,
+		x1, y1,
+		x2 - x1, y2 - y1);
+
+	if (ret < 0)
 	{
-		ret = g2d_solid_fill(nullExaRec->ctx,
-			&dstImage,
-			x1, y1,
-			x2 - x1, y2 - y1);
-		
-		if (ret == -ENOSPC ||
-			ret == -EINVAL)
-		{
-			// The command queue is full, execute it to free space
-			g2d_exec(nullExaRec->ctx);
-		}
-		else if (ret < 0)
-		{
-			// An error occured
-			xf86DrvMsg(-1, X_ERROR, "g2d_solid_fill: x1=%d, y1=%d, x2=%d, y2=%d | (ret=%d)\n",
-				x1, y1, x2, y2, ret);
-			break;
-		}
-		else
-		{
-			// Success
-			break;
-		}		
+		// An error occured
+		xf86DrvMsg(-1, X_ERROR, "g2d_solid_fill failed: x1=%d, y1=%d, x2=%d, y2=%d | (ret=%d)\n",
+			x1, y1, x2, y2, ret);
 	}
+
+	g2d_exec(nullExaRec->ctx);
 }
 
 static void
 DoneSolid(PixmapPtr pPixmap)
 {
+#if 0
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
 	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
 	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
 
 	g2d_exec(nullExaRec->ctx);
+#endif
 }
 
 
@@ -198,6 +219,12 @@ PrepareCopy(PixmapPtr pSrc, PixmapPtr pDst, int xdir, int ydir,
 	uint32_t srcBpp;
 	uint32_t dstBpp;
 
+
+	// Only GXcopy operation is supported
+	if (alu != GXcopy)
+	{
+		return FALSE;
+	}
 
 	// If there are no buffer objects, fallback
 	if (!srcPriv->bo || !dstPriv->bo)
@@ -325,16 +352,18 @@ static void Copy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
 			ret);
 	}
 
-	//ret = g2d_exec(nullExaRec->ctx);
+	ret = g2d_exec(nullExaRec->ctx);
 }
 
 static void DoneCopy(PixmapPtr pDstPixmap)
 {
+#if 0
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pDstPixmap->drawable.pScreen);
 	struct ARMSOCRec* pARMSOC = ARMSOCPTR(pScrn);
 	struct ARMSOCNullEXARec* nullExaRec = (struct ARMSOCNullEXARec*)pARMSOC->pARMSOCEXA;
 
 	g2d_exec(nullExaRec->ctx);
+#endif
 }
 
 static Bool
