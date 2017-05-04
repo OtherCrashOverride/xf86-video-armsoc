@@ -428,6 +428,10 @@ ARMSOCDRI2GetMSC(DrawablePtr pDraw, CARD64 *ust, CARD64 *msc)
 	} };
 	int ret;
 
+	DEBUG_MSG("pDraw=%p, ust=%p, msc=%p, vblank_query_supported=%d",
+		pDraw, ust, msc, pARMSOC->drmmode_interface->vblank_query_supported);
+
+
 	if (!pARMSOC->drmmode_interface->vblank_query_supported)
 		return FALSE;
 
@@ -443,6 +447,9 @@ ARMSOCDRI2GetMSC(DrawablePtr pDraw, CARD64 *ust, CARD64 *msc)
 
 	if (msc)
 		*msc = vbl.reply.sequence;
+
+	//DEBUG_MSG("Set values - ust=(%llu), msc=(%llu)",
+	//	*ust, *msc);
 
 	return TRUE;
 }
@@ -980,6 +987,9 @@ ARMSOCDRI2ScheduleWaitMSC(ClientPtr client, DrawablePtr pDraw,
 	} };
 	int ret;
 	CARD64 current_msc;
+
+	DEBUG_MSG(" client=%p, pDraw=%p, target_msc=%llu, divisor=%llu, remainder=%llu",
+		client, pDraw, target_msc, divisor, remainder);
 
 	if (!pARMSOC->drmmode_interface->vblank_query_supported)
 		return FALSE;
