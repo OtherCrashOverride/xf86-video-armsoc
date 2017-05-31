@@ -2,6 +2,7 @@
 
 /*
  * Copyright © 2011 Texas Instruments, Inc
+ * Copyright © 2017 OtherCrashOverride
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -109,6 +110,8 @@ enum {
 	OPTION_DRI_NUM_BUF,
 	OPTION_INIT_FROM_FBDEV,
 	OPTION_UMP_LOCK,
+	OPTION_NO_G2D,
+	OPTION_NO_HARDWARE_MOUSE,
 };
 
 /** Supported options. */
@@ -121,6 +124,8 @@ static const OptionInfoRec ARMSOCOptions[] = {
 	{ OPTION_DRI_NUM_BUF, "DRI2MaxBuffers", OPTV_INTEGER, {-1}, FALSE },
 	{ OPTION_INIT_FROM_FBDEV, "InitFromFBDev", OPTV_STRING, {0}, FALSE },
 	{ OPTION_UMP_LOCK,   "UMP_LOCK",   OPTV_BOOLEAN, {0}, FALSE },
+	{ OPTION_NO_G2D,    "NoG2D",     OPTV_BOOLEAN,{ 0 }, FALSE },
+	{ OPTION_NO_HARDWARE_MOUSE,    "NoHardwareMouse",     OPTV_BOOLEAN,{ 0 }, FALSE },
 	{ -1,                NULL,         OPTV_NONE,    {0}, FALSE }
 };
 
@@ -893,7 +898,14 @@ ARMSOCPreInit(ScrnInfoPtr pScrn, int flags)
 			OPTION_UMP_LOCK, FALSE);
 	INFO_MSG("umplock is %s",
 				pARMSOC->useUmplock ? "Disabled" : "Enabled");
-
+	pARMSOC->NoG2D = xf86ReturnOptValBool(pARMSOC->pOptionInfo,
+		OPTION_NO_G2D, FALSE);
+	INFO_MSG("G2D is %s",
+		pARMSOC->NoG2D ? "Disabled" : "Enabled");
+	pARMSOC->NoHardwareMouse = xf86ReturnOptValBool(pARMSOC->pOptionInfo,
+		OPTION_NO_HARDWARE_MOUSE, FALSE);
+	INFO_MSG("Hardware Mouse is %s",
+		pARMSOC->NoHardwareMouse ? "Disabled" : "Enabled");
 	/*
 	 * Select the video modes:
 	 */

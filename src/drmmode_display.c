@@ -821,17 +821,25 @@ Bool drmmode_cursor_init(ScreenPtr pScreen)
 	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
 	struct ARMSOCRec *pARMSOC = ARMSOCPTR(pScrn);
 
-	INFO_MSG("HW cursor init()");
-
-	switch (pARMSOC->drmmode_interface->cursor_api) {
-	case HWCURSOR_API_PLANE:
-		return drmmode_cursor_init_plane(pScreen);
-	case HWCURSOR_API_STANDARD:
-		return drmmode_cursor_init_standard(pScreen);
-	case HWCURSOR_API_NONE:
+	if (pARMSOC->NoHardwareMouse)
+	{
+		INFO_MSG("HW cursor disabled by option.");
 		return FALSE;
-	default:
-		assert(0);
+	}
+	else
+	{
+		INFO_MSG("HW cursor init()");
+
+		switch (pARMSOC->drmmode_interface->cursor_api) {
+		case HWCURSOR_API_PLANE:
+			return drmmode_cursor_init_plane(pScreen);
+		case HWCURSOR_API_STANDARD:
+			return drmmode_cursor_init_standard(pScreen);
+		case HWCURSOR_API_NONE:
+			return FALSE;
+		default:
+			assert(0);
+		}
 	}
 }
 
