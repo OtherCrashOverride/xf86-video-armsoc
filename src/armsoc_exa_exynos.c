@@ -103,6 +103,12 @@ PrepareSolid(PixmapPtr pPixmap, int alu, Pixel planemask, Pixel fill_color)
 	uint32_t dstBpp;
 
 
+	// Check if G2D is disabled
+	if (!nullExaRec->ctx)
+	{
+		return FALSE;
+	}
+
 	// Only GXset operation is supported
 	if (alu != GXset)
 	{
@@ -219,6 +225,12 @@ PrepareCopy(PixmapPtr pSrc, PixmapPtr pDst, int xdir, int ydir,
 	uint32_t srcBpp;
 	uint32_t dstBpp;
 
+
+	// Check if G2D is disabled
+	if (!nullExaRec->ctx)
+	{
+		return FALSE;
+	}
 
 	// Only GXcopy operation is supported
 	if (alu != GXcopy)
@@ -418,8 +430,9 @@ InitNullEXA(ScreenPtr pScreen, ScrnInfoPtr pScrn, int fd)
 	struct ARMSOCNullEXARec *null_exa;
 	struct ARMSOCEXARec *armsoc_exa;
 	ExaDriverPtr exa;
+	struct ARMSOCRec *pARMSOC = ARMSOCPTR(pScrn);
 
-	INFO_MSG("Soft EXA mode");
+	INFO_MSG("Exynos G2D EXA mode");
 
 	null_exa = calloc(1, sizeof(*null_exa));
 	if (!null_exa)
@@ -478,15 +491,21 @@ InitNullEXA(ScreenPtr pScreen, ScrnInfoPtr pScrn, int fd)
 
 	// Initialize a G2D context
 	//INFO_MSG("G2D Initializing.");
-
-	null_exa->ctx = g2d_init(fd);
-	if (!null_exa->ctx) {
-		ERROR_MSG("exaDriverInit g2d_init failed");
-		goto free_exa;
+	if (pARMSOC->NoG2D)
+	{
+		INFO_MSG("G2D disabled by option.");
+		null_exa->ctx = NULL;
 	}
+	else
+	{
+		null_exa->ctx = g2d_init(fd);
+		if (!null_exa->ctx) {
+			ERROR_MSG("exaDriverInit g2d_init failed");
+			goto free_exa;
+		}
 
-	INFO_MSG("G2D Initialized.");
-
+		INFO_MSG("G2D Initialized.");
+	}
 
 	return armsoc_exa;
 

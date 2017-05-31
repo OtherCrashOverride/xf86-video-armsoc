@@ -2,6 +2,7 @@
 
 /*
  * Copyright © 2011 Texas Instruments, Inc
+ * Copyright © 2011 OtherCrashOverride
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -133,6 +134,8 @@ struct ARMSOCRec {
 
 	/** user-configurable option: */
 	Bool				NoFlip;
+	Bool				NoG2D;
+	Bool				NoHardwareMouse;
 	unsigned			driNumBufs;
 
 	/** File descriptor of the connection with the DRM. */
