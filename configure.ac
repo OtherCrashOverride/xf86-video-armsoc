@@ -59,9 +59,9 @@ AC_ARG_WITH(xorg-module-dir,
             [moduledir="$libdir/xorg/modules"])
 
 # Checks for extensions
-XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
-XORG_DRIVER_CHECK_EXT(RENDER, renderproto)
-XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
+#XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
+#XORG_DRIVER_CHECK_EXT(RENDER, renderproto)
+#XORG_DRIVER_CHECK_EXT(DPMSExtension, xextproto)
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XORG,
