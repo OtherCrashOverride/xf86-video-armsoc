@@ -649,8 +649,8 @@ drmmode_cursor_init_plane(ScreenPtr pScreen)
 		return FALSE;
 	}
 
-	return FALSE;
-	
+	//return FALSE;
+
 	/* find an unused plane which can be used as a mouse cursor.  Note
 	 * that we cheat a bit, in order to not burn one overlay per crtc,
 	 * and only show the mouse cursor on one crtc at a time
