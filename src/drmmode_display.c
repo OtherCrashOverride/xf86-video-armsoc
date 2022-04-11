@@ -461,6 +461,60 @@ drmmode_hide_cursor(xf86CrtcPtr crtc)
 	}
 }
 
+typedef struct cursor_args
+{
+	int fd;
+	uint32_t plane_id;
+	uint32_t crtc_id;
+	uint32_t fb_id;
+	uint32_t crtc_x;
+	uint32_t crtc_y;
+	uint32_t w;
+	uint32_t h;
+	uint32_t src_x;
+	uint32_t src_y;
+	uint32_t is_valid;
+} cursor_args_t;
+
+static cursor_args_t cursor_args;
+pthread_t cursor_thread;
+pthread_mutex_t cursor_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void* cursor_thread_proc(void* arg)
+{
+	while(1)
+	{
+		if (!cursor_args.is_valid)
+		{
+			usleep(500);
+		}
+		else
+		{
+			cursor_args_t args;
+
+			pthread_mutex_lock(&cursor_mutex);
+			
+			args = cursor_args;
+			cursor_args.is_valid = 0;
+
+			pthread_mutex_unlock(&cursor_mutex);
+
+
+			/* note src coords (last 4 args) are in Q16 format */
+			drmModeSetPlane(args.fd, args.plane_id,
+				args.crtc_id, args.fb_id, 0,
+				args.crtc_x, args.crtc_y,
+				args.w, args.h,
+				args.src_x << 16, args.src_y << 16,
+				args.w << 16, args.h << 16);			
+		}
+	}
+
+	EARLY_ERROR_MSG("cursor_thread_proc: Exiting.");
+
+	return NULL;
+}
+
 /*
  * The argument "update_image" controls whether the cursor image needs
  * to be updated by the HW or not. This is ignored by HWCURSOR_API_PLANE
@@ -516,11 +570,30 @@ drmmode_show_cursor_image(xf86CrtcPtr crtc, Bool update_image)
 		if ((crtc_y + h) > crtc->mode.VDisplay)
 			h = crtc->mode.VDisplay - crtc_y;
 
+#if 0
 		/* note src coords (last 4 args) are in Q16 format */
 		drmModeSetPlane(drmmode->fd, cursor->ovr->plane_id,
 			drmmode_crtc->crtc_id, cursor->fb_id, 0,
 			crtc_x, crtc_y, w, h, src_x<<16, src_y<<16,
 			w<<16, h<<16);
+#else
+		pthread_mutex_lock(&cursor_mutex);
+
+		cursor_args.fd = drmmode->fd;
+		cursor_args.plane_id = cursor->ovr->plane_id;
+		cursor_args.crtc_id = drmmode_crtc->crtc_id;
+		cursor_args.fb_id = cursor->fb_id;
+		cursor_args.crtc_x = crtc_x;
+		cursor_args.crtc_y = crtc_y;
+		cursor_args.w = w;
+		cursor_args.h = h;
+		cursor_args.src_x = src_x;
+		cursor_args.src_y = src_y;
+
+		cursor_args.is_valid = 1;
+
+		pthread_mutex_unlock(&cursor_mutex);
+#endif
 	} else {
 		if (update_image)
 			drmModeSetCursor(drmmode->fd,
@@ -830,6 +903,11 @@ Bool drmmode_cursor_init(ScreenPtr pScreen)
 	{
 		INFO_MSG("HW cursor init()");
 
+		if (pthread_create(&cursor_thread, NULL, cursor_thread_proc, NULL))
+		{
+			INFO_MSG("pthread_create failed.");
+		}
+
 		switch (pARMSOC->drmmode_interface->cursor_api) {
 		case HWCURSOR_API_PLANE:
 			return drmmode_cursor_init_plane(pScreen);
@@ -852,6 +930,14 @@ void drmmode_cursor_fini(ScreenPtr pScreen)
 
 	if (!cursor)
 		return;
+
+	if (cursor_thread)
+	{
+		pthread_cancel(cursor_thread);
+		pthread_join(cursor_thread, NULL);
+
+		cursor_thread = 0;
+	}
 
 	drmmode->cursor = NULL;
 	xf86_cursors_fini(pScreen);
