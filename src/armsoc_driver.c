@@ -735,29 +735,8 @@ out:
 */
 static struct drmmode_interface *get_drmmode_implementation(int drm_fd)
 {
-	drmVersionPtr version;
-	struct drmmode_interface *ret = NULL;
-	struct drmmode_interface *ifaces[] = {
-		&exynos_interface,
-		&pl111_interface,
-		&kirin_interface,
-		&sti_interface,
-	};
-	int i;
+	struct drmmode_interface *ret = &rockchip_interface;
 
-	version = drmGetVersion(drm_fd);
-	if (!version)
-		return NULL;
-
-	for (i = 0; i < ARRAY_SIZE(ifaces); i++) {
-		struct drmmode_interface *iface = ifaces[i];
-		if (strcmp(version->name, iface->driver_name) == 0) {
-			ret = iface;
-			break;
-		}
-	}
-
-	drmFreeVersion(version);
 	return ret;
 }
 

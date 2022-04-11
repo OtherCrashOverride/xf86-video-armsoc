@@ -37,20 +37,16 @@ ERROR_CFLAGS = -Werror -Wall -Wdeclaration-after-statement -Wvla \
  
 AM_CFLAGS = @XORG_CFLAGS@ $(ERROR_CFLAGS)
 armsoc_drv_la_LTLIBRARIES = armsoc_drv.la
-armsoc_drv_la_LDFLAGS = -module -avoid-version -no-undefined
+armsoc_drv_la_LDFLAGS = -module -avoid-version -no-undefined -lrga -lpixman-1 -lpthread
 armsoc_drv_la_LIBADD = @XORG_LIBS@
 armsoc_drv_ladir = @moduledir@/drivers
-DRMMODE_SRCS = drmmode_exynos/drmmode_exynos.c \
-	drmmode_pl111/drmmode_pl111.c \
-	drmmode_kirin/drmmode_kirin.c \
-	drmmode_sti/drmmode_sti.c
+DRMMODE_SRCS = drmmode_rockchip/drmmode_rockchip.c
 
 
 armsoc_drv_la_SOURCES = \
          drmmode_display.c \
          armsoc_exa.c \
-         armsoc_exa_exynos.c \
-	 exynos_fimg2d.c \
+         armsoc_exa_null.c \
          armsoc_dri2.c \
          armsoc_driver.c \
          armsoc_dumb.c \
