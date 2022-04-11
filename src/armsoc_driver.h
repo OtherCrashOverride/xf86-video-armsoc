@@ -134,7 +134,7 @@ struct ARMSOCRec {
 
 	/** user-configurable option: */
 	Bool				NoFlip;
-	Bool				NoG2D;
+	Bool				NoRGA;
 	Bool				NoHardwareMouse;
 	unsigned			driNumBufs;
 
